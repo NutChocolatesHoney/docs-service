@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: docs-service
+  cloud:
+    nacos:
+      config:
+        file-extension: yaml
+        namespace: ${NACOS_NAMESPACE:cadc707f-d834-429d-8ab4-a85963c3294f}
+        server-addr: ${NACOS_SERVER_ADDR:39.106.229.156:8848}
+        shared-dataids: comm-tomcat-temp.yaml,comm-version.yaml,comm-logging.yaml,comm-redis.yaml,comm-datasource.yaml,comm-ribbon.yaml,common-hystrix.yaml,common-feign.yaml
+        refreshable-dataids: comm-logging.yaml
+      discovery:
+        namespace: ${NACOS_NAMESPACE:cadc707f-d834-429d-8ab4-a85963c3294f}
+        server-addr: ${NACOS_SERVER_ADDR:39.106.229.156:8848}
+

@@ -1,0 +1,142 @@
+buildscript {
+    repositories {
+        maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.0.RELEASE")
+    }
+}
+
+group 'docs'
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'application'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+mainClassName = "com.docs.ApplicationRun"
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+[compileJava, compileTestJava]*.options*.encoding = "UTF-8"
+
+repositories {
+    maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Greenwich.SR2'
+        mavenBom 'org.springframework.cloud:spring-cloud-alibaba-dependencies:0.9.0.RELEASE'
+    }
+}
+
+ext {
+    swagger_version = "2.9.2"
+    mysql_connector_version = '8.0.21'
+    props = loadProperties()
+}
+
+configurations {
+    mybatisGenerator
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-data-redis"
+    compile "org.springframework.boot:spring-boot-starter-jdbc"
+    compile "org.springframework.boot:spring-boot-starter-security"
+    compile "org.springframework.session:spring-session-data-redis"
+
+    //实现了熔断
+    compile "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
+    compile "org.springframework.cloud:spring-cloud-starter-netflix-ribbon"
+    compile "org.springframework.cloud:spring-cloud-starter-openfeign"
+
+    compile "org.springframework.cloud:spring-cloud-starter-alibaba-nacos-discovery"
+    compile "org.springframework.cloud:spring-cloud-starter-alibaba-nacos-config"
+
+    compile "mysql:mysql-connector-java:${mysql_connector_version}"
+    compile "com.alibaba:druid-spring-boot-starter:1.1.17"
+    compile "org.mybatis.spring.boot:mybatis-spring-boot-starter:1.3.2"
+
+    compile "org.apache.commons:commons-pool2:2.6.0"
+
+    compile "io.springfox:springfox-swagger2:${swagger_version}"
+    compile "io.springfox:springfox-swagger-ui:${swagger_version}"
+    compile 'io.swagger:swagger-core:1.5.22'
+    compile 'io.swagger:swagger-annotations:1.5.22'
+
+    compile group: 'tk.mybatis', name: 'mapper-spring-boot-starter', version: '2.1.5'
+    compile group: 'tk.mybatis', name: 'mapper', version: '4.1.5'
+
+
+    compile "io.jsonwebtoken:jjwt:0.9.1"
+    compile "org.mybatis.generator:mybatis-generator-core:1.3.2"
+    testCompile "junit:junit:4.12"
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+
+    mybatisGenerator("org.mybatis.generator:mybatis-generator-core:1.3.2",
+            "mysql:mysql-connector-java:${mysql_connector_version}",
+    )
+}
+
+
+def loadProperties() {
+    def p = new Properties()
+    new File("${projectDir.path}/src/main/resources/jdbc.properties").withInputStream {
+        stream -> p.load(stream)
+    }
+    p
+}
+
+
+def getDbProperties = {
+    def properties = new Properties()
+    file("src/main/resources/jdbc.properties").withInputStream { inputStream ->
+        properties.load(inputStream)
+    }
+    properties
+}
+
+task mybatisGenerate {
+    doLast {
+        def properties = getDbProperties()
+        ant.properties['targetProject'] = projectDir.path
+        ant.properties['driverClass'] = properties.getProperty("jdbc.driverClassName")
+        ant.properties['connectionURL'] = properties.getProperty("jdbc.url")
+        ant.properties['userId'] = properties.getProperty("jdbc.username")
+        ant.properties['password'] = properties.getProperty("jdbc.password")
+        ant.properties['src_main_java'] = sourceSets.main.java.srcDirs[0].path
+        ant.properties['src_main_resources'] = sourceSets.main.resources.srcDirs[0].path
+        ant.properties['modelPackage'] = properties.getProperty("package.model")
+        ant.properties['mapperPackage'] = properties.getProperty("package.mapper")
+        ant.properties['sqlMapperPackage'] = properties.getProperty("package.xml")
+        ant.taskdef(
+                name: 'mbgenerator',
+                classname: 'org.mybatis.generator.ant.GeneratorAntTask',
+                classpath: configurations.mybatisGenerator.asPath
+        )
+        ant.mbgenerator(overwrite: true,
+                configfile: 'src/main/resources/generatorConfig.xml', verbose: true) {
+            propertyset {
+                propertyref(name: 'targetProject')
+                propertyref(name: 'userId')
+                propertyref(name: 'driverClass')
+                propertyref(name: 'connectionURL')
+                propertyref(name: 'password')
+                propertyref(name: 'src_main_java')
+                propertyref(name: 'src_main_resources')
+                propertyref(name: 'modelPackage')
+                propertyref(name: 'mapperPackage')
+                propertyref(name: 'sqlMapperPackage')
+            }
+        }
+    }
+
+}

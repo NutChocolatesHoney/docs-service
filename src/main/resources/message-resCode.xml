@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+    <Message code="0000" desc="操作成功"/>
+
+    <!--9xxx系列 系统级消息 -->
+    <Message code="9000" desc="请稍后重试"/>
+    <Message code="9400" desc="参数错误"/>
+    <Message code="9401" desc="附件不存在"/>
+    <Message code="9402" desc="无效token"/>
+    <Message code="9412" desc="附件类型错误"/>
+    <Message code="9413" desc="附件大小超出限制"/>
+    <Message code="9417" desc="版本不匹配"/>
+    <Message code="9999" desc="未知错误"/>
+
+
+</Root>
